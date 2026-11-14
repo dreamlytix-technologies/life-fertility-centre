@@ -1,0 +1,450 @@
+// =============================================================================
+// Life Fertility Centre (Malda) — PostgreSQL data model.
+// Derived from the shared clinic booking engine; vaccination tables removed and
+// the patient record reduced to the minimum an adult consultation needs.
+// Money is stored as integer minor units (paise). Times of day are "HH:mm"
+// strings in the clinic timezone (SiteSettings.timezone); instants are UTC.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------- enums ----
+
+/// Only CONSULTATION is bookable online. EMERGENCY is kept for the engine's
+/// optional time-boxed pool, which is disabled for this centre.
+enum AppointmentType {
+  CONSULTATION
+  EMERGENCY
+}
+
+/// Fixed list chosen by the patient when booking (no free-text history).
+enum VisitReason {
+  GYNAE
+  FERTILITY
+  PREGNANCY
+  FOLLOW_UP
+  SECOND_OPINION
+}
+
+/// Consultations use the STANDARD pool; emergency visits their own pool.
+enum SlotPool {
+  STANDARD
+  EMERGENCY
+}
+
+enum BookingStatus {
+  PENDING
+  PAYMENT_PENDING
+  CONFIRMED
+  RESCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  REFUND_PENDING
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_PAID
+}
+
+enum ExceptionType {
+  HOLIDAY
+  SPECIAL_HOURS
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TestimonialSource {
+  GOOGLE
+  FACEBOOK
+  INSTAGRAM
+  PRACTO
+  JUSTDIAL
+  IN_CLINIC
+  OTHER
+}
+
+enum GalleryCategory {
+  CLINIC
+  CONSULTATION
+  PREGNANCY
+  LABORATORY
+  NEWBORN
+  EVENTS
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  REPLIED
+  ARCHIVED
+  SPAM
+}
+
+enum AdminRole {
+  OWNER
+  ADMIN
+  RECEPTION
+}
+
+// -------------------------------------------------------------- settings ----
+
+/// Single-row table (id = 1). Everything the booking engine needs to be
+/// configurable lives here or in the schedule tables — nothing is hardcoded.
+model SiteSettings {
+  id                       Int      @id @default(1)
+  clinicName               String
+  legalName                String?
+  tagline                  String?
+  phone                    String
+  phoneDisplay             String
+  emergencyPhone           String?
+  emergencyPhoneDisplay    String?
+  whatsapp                 String?
+  email                    String
+  addressLine1             String
+  addressLine2             String?
+  city                     String
+  state                    String
+  postalCode               String
+  country                  String   @default("IN")
+  latitude                 Float?
+  longitude                Float?
+  mapsUrl                  String?
+  mapEmbedUrl              String?
+  timezone                 String   @default("Asia/Kolkata")
+  currency                 String   @default("INR")
+  locale                   String   @default("en-IN")
+
+  // --- appointment rules (money in paise) ---
+  consultationFee          Int
+  emergencyFee             Int
+  advancePayment           Int      // ADVANCE_PAYMENT_AMOUNT — configurable
+  emergencyAdvancePayment  Int
+  slotDurationMinutes      Int      @default(15)
+  maxPerSlot               Int      @default(1)
+  bookingWindowDays        Int      @default(14)
+  minLeadMinutes           Int      @default(30)
+  deskOpensAt              String?  // online booking accepted from (HH:mm), null = 24h
+  deskClosesAt             String?
+  holdMinutes              Int      @default(10) // temporary slot reservation during payment
+  referencePrefix          String   @default("LFC")
+
+  updatedAt                DateTime @updatedAt
+}
+
+/// Weekly opening hours. Multiple rows per day = multiple ranges
+/// (e.g. 10:00–13:00 and 17:00–20:00). A day with no rows is closed.
+model ClinicSchedule {
+  id        String   @id @default(cuid())
+  doctorId  String?
+  doctor    Doctor?  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  dayOfWeek Int // 0 = Sunday … 6 = Saturday
+  startTime String
+  endTime   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dayOfWeek, isActive])
+}
+
+/// Holiday closures and special hours. SPECIAL_HOURS rows replace the weekly
+/// ranges for that date (several rows = several ranges).
+model Holiday {
+  id        String        @id @default(cuid())
+  date      DateTime      @db.Date
+  type      ExceptionType @default(HOLIDAY)
+  label     String
+  startTime String?
+  endTime   String?
+  doctorId  String?
+  doctor    Doctor?       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+
+  @@index([date])
+}
+
+model EmergencySchedule {
+  id                  String   @id @default(cuid())
+  isEnabled           Boolean  @default(false)
+  daysOfWeek          Int[]
+  startTime           String
+  endTime             String
+  slotDurationMinutes Int      @default(15)
+  capacityPerSlot     Int      @default(1)
+  maxPerDay           Int      @default(8)
+  closedOnHolidays    Boolean  @default(true)
+  notice              String?
+  updatedAt           DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------- people ----
+
+model Doctor {
+  id                 String            @id @default(cuid())
+  slug               String            @unique
+  name               String
+  honorific          String            @default("Dr.")
+  photoUrl           String?
+  specialization     String
+  qualifications     String[]
+  experienceSince    Int // year practice started — "years of experience" is derived
+  registrationNo     String?
+  shortBio           String
+  biography          String
+  approach           String
+  previousExperience Json // [{ role, organisation, from, to }]
+  languages          String[]
+  memberships        String[]
+  isPrimary          Boolean           @default(false)
+  isActive           Boolean           @default(true)
+  sortOrder          Int               @default(0)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  schedules          ClinicSchedule[]
+  holidays           Holiday[]
+  slots              AppointmentSlot[]
+  appointments       Appointment[]
+}
+
+/// The phone number is the patient's identity for booking: no accounts.
+/// Kept minimal on purpose (data minimisation): no DOB, address or history.
+model Patient {
+  id            String        @id @default(cuid())
+  name          String
+  phone         String
+  email         String?
+  ageYears      Int
+  ageRecordedAt DateTime      @default(now()) // age is relative to this instant
+  partnerName   String? // optional, fertility consultations
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  appointments  Appointment[]
+
+  @@index([phone])
+}
+
+// --------------------------------------------------------------- catalog ----
+
+model Service {
+  id               String          @id @default(cuid())
+  slug             String          @unique
+  title            String
+  shortDescription String
+  description      String
+  highlights       String[]
+  icon             String // icon key resolved by each site's icon set
+  imageUrl         String?
+  category         String? // Fertility · Gynaecology · Pregnancy
+  appointmentType  AppointmentType @default(CONSULTATION)
+  isActive         Boolean         @default(true)
+  sortOrder        Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  appointments     Appointment[]
+}
+
+// ------------------------------------------------------------- booking -----
+
+/// Materialised lazily the first time a date/time is booked, or created by
+/// staff to override capacity / disable a slot. Row-locked (FOR UPDATE)
+/// during reservation to make double booking impossible.
+model AppointmentSlot {
+  id           String        @id @default(cuid())
+  doctorId     String
+  doctor       Doctor        @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  pool         SlotPool      @default(STANDARD)
+  date         DateTime      @db.Date
+  startTime    String
+  endTime      String
+  capacity     Int
+  isDisabled   Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+
+  @@unique([doctorId, pool, date, startTime])
+  @@index([date, pool])
+}
+
+model Appointment {
+  id                String             @id @default(cuid())
+  reference         String             @unique // human booking ID, e.g. LFC-261116-7KQ2X
+  accessTokenHash   String // sha256 of the token in the confirmation link
+  type              AppointmentType
+  status            BookingStatus      @default(PENDING)
+  doctorId          String
+  doctor            Doctor             @relation(fields: [doctorId], references: [id])
+  serviceId         String?
+  service           Service?           @relation(fields: [serviceId], references: [id])
+  visitReason       VisitReason?
+  patientId         String
+  patient           Patient            @relation(fields: [patientId], references: [id])
+  slotId            String
+  slot              AppointmentSlot    @relation(fields: [slotId], references: [id])
+  scheduledStart    DateTime
+  scheduledEnd      DateTime
+  reason            String? // optional patient note, max 300 chars
+  holdExpiresAt     DateTime? // PAYMENT_PENDING holds count against capacity until this instant
+  consultationFee   Int // price snapshot, computed on the server
+  advanceAmount     Int
+  currency          String             @default("INR")
+  idempotencyKey    String?            @unique
+  source            String             @default("WEB")
+  staffNotes        String?
+  rescheduledFromId String?
+  confirmedAt       DateTime?
+  cancelledAt       DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  payments          Payment[]
+  events            AppointmentEvent[]
+
+  @@index([slotId, status])
+  @@index([scheduledStart])
+  @@index([status, scheduledStart])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  appointmentId     String
+  appointment       Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  provider          String // "razorpay" | "cashfree" | "stripe" | "mock"
+  providerOrderId   String        @unique
+  providerPaymentId String?       @unique
+  amount            Int
+  currency          String        @default("INR")
+  status            PaymentStatus @default(PENDING)
+  failureReason     String?
+  refundedAmount    Int           @default(0)
+  providerRefundId  String?
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([appointmentId])
+}
+
+/// Webhook de-duplication: providers retry, we process each event once.
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  provider   String
+  eventId    String
+  type       String
+  receivedAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+}
+
+/// Append-only audit trail of every status change.
+model AppointmentEvent {
+  id            String         @id @default(cuid())
+  appointmentId String
+  appointment   Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  fromStatus    BookingStatus?
+  toStatus      BookingStatus
+  actor         String // "system" | "payment" | "admin:<id>"
+  note          String?
+  createdAt     DateTime       @default(now())
+
+  @@index([appointmentId])
+}
+
+// --------------------------------------------------------------- content ----
+
+model Testimonial {
+  id            String            @id @default(cuid())
+  authorName    String
+  relation      String?
+  content       String
+  rating        Int? // 1–5, optional — never fabricated
+  source        TestimonialSource @default(IN_CLINIC)
+  sourceUrl     String?
+  avatarUrl     String?
+  publishedAt   DateTime
+  status        ModerationStatus  @default(PENDING)
+  isActive      Boolean           @default(true)
+  sortOrder     Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([status, isActive])
+}
+
+model GalleryImage {
+  id        String          @id @default(cuid())
+  src       String
+  alt       String
+  caption   String?
+  category  GalleryCategory
+  width     Int
+  height    Int
+  blurData  String?
+  isActive  Boolean         @default(true)
+  sortOrder Int             @default(0)
+  createdAt DateTime        @default(now())
+
+  @@index([category, isActive])
+}
+
+model ContactMessage {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  status    ContactStatus @default(NEW)
+  ipHash    String?
+  createdAt DateTime      @default(now())
+
+  @@index([status, createdAt])
+}
+
+// ----------------------------------------------------------------- admin ----
+
+model AdminUser {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String
+  passwordHash String // scrypt/argon2 — never plaintext
+  role         AdminRole      @default(RECEPTION)
+  isActive     Boolean        @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime       @default(now())
+  sessions     AdminSession[]
+}
+
+model AdminSession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  ip        String?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
