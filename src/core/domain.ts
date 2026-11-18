@@ -16,6 +16,10 @@ export type SlotPool = 'STANDARD' | 'EMERGENCY';
 export const poolFor = (type: AppointmentType): SlotPool => (type === 'EMERGENCY' ? 'EMERGENCY' : 'STANDARD');
 
 /** Why the patient is coming. A fixed list, so no free-text medical history is needed. */
+export const GENDERS = ['FEMALE', 'MALE', 'OTHER'] as const;
+export type Gender = (typeof GENDERS)[number];
+export const GENDER_LABELS: Record<Gender, string> = { FEMALE: 'Female', MALE: 'Male', OTHER: 'Other' };
+
 export const VISIT_REASONS = ['GYNAE', 'FERTILITY', 'PREGNANCY', 'FOLLOW_UP', 'SECOND_OPINION'] as const;
 export type VisitReason = (typeof VISIT_REASONS)[number];
 export const VISIT_REASON_LABELS: Record<VisitReason, string> = {
@@ -222,12 +226,14 @@ export interface ClinicSeed {
 
 /**
  * Deliberately minimal because health data is sensitive: no date of birth,
- * address, gender field or medical history. Age is whole years.
+ * address or medical history. Age is whole years.
  */
 export interface PatientDetails {
   contactNumber: string;
   patientName: string;
   age: number;
+  /** Optional only so records made before the field existed still load. */
+  gender?: Gender;
   email?: string;
   /** Optional, for fertility consultations attended as a couple. */
   partnerName?: string;
@@ -282,6 +288,8 @@ export interface PublicBooking {
   type: AppointmentType;
   status: BookingStatus;
   patientName: string;
+  patientAge: number;
+  patientGender?: Gender;
   doctorName: string;
   visitReasonLabel?: string;
   serviceTitle?: string;

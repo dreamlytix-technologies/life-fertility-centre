@@ -29,7 +29,7 @@ export const FAQ_GROUPS: { id: string; title: string; items: Faq[] }[] = [
       },
       {
         q: 'Can I change or cancel my booking?',
-        a: 'Yes. Please call the centre as early as possible. The cancellation and refund policy explains when the advance is refunded.',
+        a: 'You can reschedule by calling the centre as early as possible. The advance is non-refundable if you cancel, but it is returned if the centre cancels or a payment goes wrong.',
       },
     ],
   },
@@ -79,7 +79,7 @@ export const FAQ_GROUPS: { id: string; title: string; items: Faq[] }[] = [
     items: [
       {
         q: 'What information do you collect when I book?',
-        a: 'Only the patient’s name, age, phone number, an optional email, the reason for the visit, an optional partner name and an optional short note. No medical history or reports are uploaded online.',
+        a: 'Only the patient’s name, age, gender, phone number, an optional email, the reason for the visit, an optional partner name and an optional short note. No medical history or reports are uploaded online.',
       },
       {
         q: 'Who can see my booking?',

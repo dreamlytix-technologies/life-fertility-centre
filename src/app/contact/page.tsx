@@ -32,7 +32,7 @@ export default async function ContactPage() {
         crumbs={[{ href: '/contact', label: 'Contact' }]}
       />
       <section className="py-14 lg:py-20">
-        <div className="shell grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
+        <div className="shell grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
           <ul className="grid content-start gap-3">
             {[
               { icon: 'phone' as const, label: 'Phone', value: CLINIC.phoneDisplay, href: `tel:${CLINIC.phone}` },
@@ -51,7 +51,7 @@ export default async function ContactPage() {
                   </span>
                   <span className="min-w-0">
                     <span className="block text-[0.78rem] font-semibold tracking-wide text-muted uppercase">{c.label}</span>
-                    <span className="block font-semibold break-words">{c.value}</span>
+                    <span className="block font-semibold [overflow-wrap:anywhere]">{c.value}</span>
                   </span>
                 </a>
               </li>

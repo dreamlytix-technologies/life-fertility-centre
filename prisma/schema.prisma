@@ -234,6 +234,7 @@ model Patient {
   phone         String
   email         String?
   ageYears      Int
+  gender        String? // FEMALE | MALE | OTHER (null on rows made before it was asked)
   ageRecordedAt DateTime      @default(now()) // age is relative to this instant
   partnerName   String? // optional, fertility consultations
   createdAt     DateTime      @default(now())

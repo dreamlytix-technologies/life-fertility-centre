@@ -39,6 +39,7 @@ const MONDAY_9AM = zonedToUtc('2026-11-16', '09:00', 'Asia/Kolkata');
 const patient = {
   patientName: 'Asha Das',
   age: 31,
+  gender: 'FEMALE',
   contactNumber: '98765 43210',
   email: '',
   partnerName: '',

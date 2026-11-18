@@ -40,7 +40,7 @@ export const CLINIC = {
   email: 'debchandanroy@gmail.com',
   hoursLabel: 'Mon–Sat · 10:00 AM – 2:00 PM',
   hoursShort: 'Mon–Sat 10–2',
-  consultationFeeRupees: 650,
+  consultationFeeRupees: 600,
   advanceRupees: 200,
 } as const;
 

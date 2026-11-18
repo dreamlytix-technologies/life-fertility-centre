@@ -5,6 +5,7 @@ import { formatMoney } from '@/core/domain';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CLINIC, LEGAL } from '@/content/facts';
+import { Acknowledgement } from '@/components/booking/Acknowledgement';
 import { CopyButton, PendingCountdown, PrintButton } from '@/components/booking/ConfirmationActions';
 import { Icon, LogoMark } from '@/components/ui/Icon';
 import { api } from '@/lib/api';
@@ -52,7 +53,8 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
   const money = (p: number) => formatMoney(p, b.currency);
   const confirmed = ['CONFIRMED', 'RESCHEDULED', 'COMPLETED'].includes(b.status);
   const pending = b.status === 'PAYMENT_PENDING' || b.status === 'PENDING';
-  const icsUrl = `/api/bookings/ics?ref=${encodeURIComponent(b.reference)}&token=${encodeURIComponent(token)}`;
+  // Shorter address for this page (the full state name stays in SEO data and policies).
+  const address = b.clinic.address.replace('West Bengal', 'WB');
   const rows: [string, string][] = [
     ['Patient', b.patientName],
     ['Doctor', b.doctorName],
@@ -63,30 +65,24 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
     ['Payment status', b.payment ? PAYMENT_STATUS_LABELS[b.payment.status] : 'No payment'],
     ['Transaction ID', b.payment?.transactionId ?? '—'],
     ['Pay at the centre', money(b.remainingAmount)],
-    ['Address', `${b.clinic.name}, ${b.clinic.address}`],
+    ['Address', address],
   ];
 
   return (
-    <div className="shell py-12 lg:py-16">
-      <div className="print-only mb-6 border-b pb-4">
-        <p style={{ fontSize: '18pt', fontWeight: 600 }}>{b.clinic.name}</p>
-        <p>
-          {b.clinic.address} · {b.clinic.phoneDisplay}
-        </p>
-      </div>
-      <div className="mx-auto max-w-4xl">
-        <header className="grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
+    <div className="shell py-8 lg:py-10">
+      {confirmed && <Acknowledgement b={b} />}
+      <div className="no-print mx-auto max-w-4xl">
+        <header className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
           <span
-            className={`no-print flex size-20 items-center justify-center rounded-full border ${confirmed ? 'border-ok bg-blush-light text-ok' : pending ? 'border-warn bg-gold-soft text-warn' : 'border-line bg-blush-light text-ink-soft'}`}
+            className={`no-print flex size-14 items-center justify-center rounded-full border ${confirmed ? 'border-ok bg-blush-light text-ok' : pending ? 'border-warn bg-gold-soft text-warn' : 'border-line bg-blush-light text-ink-soft'}`}
           >
-            <Icon name={confirmed ? 'check' : pending ? 'clock' : 'info'} size={34} strokeWidth={confirmed ? 2 : 1.5} />
+            <Icon name={confirmed ? 'check' : pending ? 'clock' : 'info'} size={26} strokeWidth={confirmed ? 2 : 1.5} />
           </span>
           <div>
-            <p className="kicker">Booking {b.reference}</p>
-            <h1 className="t-1 mt-2">
+            <h1 className="t-2 !text-[clamp(1.45rem,2.3vw,1.9rem)]">
               {confirmed ? (
                 <>
-                  Appointment <span className="accent">confirmed</span>
+                  Appointment <span className="accent">Confirmed</span>
                 </>
               ) : pending ? (
                 'Awaiting payment'
@@ -94,7 +90,7 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
                 BOOKING_STATUS_LABELS[b.status]
               )}
             </h1>
-            <p className="intro mt-3">
+            <p className="mt-1 text-[0.95rem] leading-relaxed text-ink-soft">
               {confirmed && `See you on ${formatDateLong(b.date)} at ${formatTime12(b.startTime)}.`}
               {pending && 'Your time is held while the advance is paid. If the hold runs out, the time is released and nothing is charged.'}
               {b.status === 'REFUND_PENDING' &&
@@ -116,19 +112,19 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
           </div>
         )}
 
-        <section aria-labelledby="details-title" className="panel mt-10 overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line bg-blush-light px-5 py-4 sm:px-7">
+        <section aria-labelledby="details-title" className="panel mt-6 overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line bg-blush-light px-5 py-3 sm:px-6">
             <div className="flex items-center gap-3">
-              <LogoMark size={30} className="no-print" />
+              <LogoMark size={26} className="no-print" />
               <div>
-                <h2 id="details-title" className="font-display text-xl font-semibold">
+                <h2 id="details-title" className="font-display text-lg font-semibold">
                   Booking details
                 </h2>
-                <p className="text-[0.85rem] text-muted">Status: {BOOKING_STATUS_LABELS[b.status]}</p>
+                <p className="text-[0.8rem] text-muted">Status: {BOOKING_STATUS_LABELS[b.status]}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="rounded-lg bg-plum-deep px-3.5 py-2 font-mono text-[0.85rem] tracking-wider text-cream">{b.reference}</span>
+              <span className="rounded-lg bg-plum-deep px-3 py-1.5 font-mono text-[0.8rem] tracking-wider text-cream">{b.reference}</span>
               <CopyButton text={b.reference} label="Copy ID" />
             </div>
           </div>
@@ -136,10 +132,10 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
             {rows.map(([k, v], i) => (
               <div
                 key={k}
-                className={`border-line px-5 py-3.5 sm:px-7 ${i < rows.length - 1 ? 'border-b' : ''} ${i % 2 === 0 && k !== 'Address' ? 'sm:border-r' : ''} ${k === 'Address' ? 'sm:col-span-2' : ''}`}
+                className={`border-line px-5 py-2.5 sm:px-6 ${i < rows.length - 1 ? 'border-b' : ''} ${i >= rows.length - 2 ? 'sm:border-b-0' : ''} ${i % 2 === 0 ? 'sm:border-r' : ''}`}
               >
-                <dt className="text-[0.85rem] text-muted">{k}</dt>
-                <dd className={`mt-0.5 font-semibold break-words ${k === 'Transaction ID' ? 'font-mono text-[0.85rem]' : ''}`}>{v}</dd>
+                <dt className="text-[0.78rem] text-muted">{k}</dt>
+                <dd className={`mt-0.5 font-semibold break-words ${k === 'Transaction ID' ? 'font-mono text-[0.8rem]' : 'text-[0.93rem]'}`}>{v}</dd>
               </div>
             ))}
           </dl>
@@ -147,50 +143,41 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
 
         {confirmed && (
           <>
-            <div className="no-print mt-6 flex flex-wrap gap-3">
+            <div className="no-print mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4 [&>*]:w-full [&>*]:justify-center [&>*]:px-3 [&>*]:text-center [&>*]:text-[0.86rem]">
               <PrintButton />
-              <a href={icsUrl} className="btn btn-quiet">
-                <Icon name="calendar" size={18} /> Add to calendar (.ics)
-              </a>
               <a href={googleCalendarUrl(b)} target="_blank" rel="noopener noreferrer" className="btn btn-quiet">
                 Google Calendar <Icon name="arrowUpRight" size={15} />
                 <span className="sr-only">(opens in a new tab)</span>
               </a>
               {b.clinic.mapsUrl && (
                 <a href={b.clinic.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn btn-quiet">
-                  <Icon name="directions" size={18} /> Directions
+                  <Icon name="directions" size={18} /> Get Directions
                   <span className="sr-only">(opens Google Maps in a new tab)</span>
                 </a>
               )}
+              <a href={`tel:${b.clinic.phone}`} className="btn btn-quiet">
+                <Icon name="phone" size={17} /> Call Clinic
+              </a>
             </div>
-            <section aria-labelledby="next-title" className="mt-10 grid gap-4 sm:grid-cols-3">
-              <h2 id="next-title" className="sr-only">
-                Before your visit
+            <section aria-labelledby="next-title" className="panel mt-6 p-5 sm:p-6">
+              <h2 id="next-title" className="text-[1rem] font-semibold">
+                Please note
               </h2>
-              {[
-                ['clock', 'Arrive 10 minutes early', 'It gives time for a short registration at the desk.'],
-                ['download', 'Bring your reports', 'Prescriptions, blood tests, ultrasound reports and films. For fertility visits, both partners’ reports.'],
-                ['phone', 'Need to change it?', `Call ${b.clinic.phoneDisplay}. See the cancellation policy for refunds.`],
-              ].map(([icon, title, body]) => (
-                <div key={title} className="panel p-5">
-                  <Icon name={icon as 'clock'} size={22} className="text-gold-ink" />
-                  <p className="mt-3 font-semibold">{title}</p>
-                  <p className="mt-1 text-[0.9rem] text-ink-soft">{body}</p>
-                </div>
-              ))}
+              <ol className="mt-3 grid list-decimal gap-2 pl-5 text-[0.9rem] leading-relaxed text-ink-soft marker:font-semibold marker:text-ink-soft">
+                <li>Registration fee is not refundable.</li>
+                <li>Please pay the consultation charges to the doctor at the centre.</li>
+                <li>Please bring this confirmation or the SMS to your consultation and for any follow-up.</li>
+                <li>
+                  Please arrive on time for your time slot.{' '}
+                  <span className="font-semibold text-danger">
+                    (In case of a doctor’s emergency, it may be delayed by up to 1 hour.)
+                  </span>
+                </li>
+              </ol>
             </section>
-            <p className="mt-6 text-[0.85rem] text-muted">{LEGAL.pcpndt}</p>
+            <p className="no-print mt-4 text-[0.8rem] text-muted">{LEGAL.pcpndt}</p>
           </>
         )}
-
-        <div className="no-print mt-10 flex flex-wrap gap-3">
-          <a href={`tel:${b.clinic.phone}`} className="btn btn-line">
-            <Icon name="phone" size={18} /> Call the centre
-          </a>
-          <Link href="/" className="btn btn-quiet">
-            Back to home
-          </Link>
-        </div>
       </div>
     </div>
   );

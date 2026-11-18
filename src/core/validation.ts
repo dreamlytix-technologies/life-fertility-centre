@@ -3,7 +3,7 @@
  * The server re-validates everything — client validation is only for UX.
  */
 import { z } from 'zod';
-import { VISIT_REASONS } from './domain';
+import { GENDERS, VISIT_REASONS } from './domain';
 import { isHHmm, isISODate } from './booking/time';
 
 const NAME_RE = /^[\p{L}][\p{L}\p{M} .'-]*$/u;
@@ -34,6 +34,7 @@ export const patientSchema = z.object({
     .int('Use whole years')
     .min(AGE_LIMITS.min, AGE_MESSAGE)
     .max(AGE_LIMITS.max, AGE_MESSAGE),
+  gender: z.enum(GENDERS, { error: 'Choose gender' }),
   contactNumber: phoneSchema,
   email: z.union([z.literal(''), z.email('Enter a valid email')]).optional(),
   /** '' is treated as "not given" (normalised to undefined by the booking service). */

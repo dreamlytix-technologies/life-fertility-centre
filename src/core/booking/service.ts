@@ -94,6 +94,7 @@ export async function createBooking(store: ClinicStore, body: unknown, now = new
         patient: {
           patientName: patient.patientName,
           age: patient.age,
+          gender: patient.gender,
           contactNumber: patient.contactNumber,
           email: patient.email || undefined,
           partnerName: patient.partnerName || undefined,
@@ -209,6 +210,8 @@ export async function getPublicBooking(store: ClinicStore, reference: string, to
     type: a.type,
     status: a.status,
     patientName: a.patient.patientName,
+    patientAge: a.patient.age,
+    patientGender: a.patient.gender,
     doctorName: `${doctor.honorific} ${doctor.name}`,
     visitReasonLabel: a.visitReason ? VISIT_REASON_LABELS[a.visitReason] : undefined,
     serviceTitle: services.find((s) => s.slug === a.serviceSlug)?.title,

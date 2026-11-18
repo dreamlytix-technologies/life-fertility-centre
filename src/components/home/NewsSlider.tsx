@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatPressDate, type PressItem } from '@/content/press';
+
+const LANG_CODE: Record<PressItem['language'], string> = { Bengali: 'bn', English: 'en', Hindi: 'hi' };
 import { Icon } from '@/components/ui/Icon';
 
 function ReadLink({ item }: { item: PressItem }) {
@@ -34,7 +36,12 @@ function Slide({ item, index, total }: { item: PressItem; index: number; total: 
           <span aria-hidden="true" className="size-1 rounded-full bg-gold" />
           <span>{formatPressDate(item.date)}</span>
         </p>
-        <h3 className="mt-4 text-[1.45rem] leading-[1.2] font-bold tracking-[-0.02em] text-plum-deep sm:text-[1.9rem]">{item.headline}</h3>
+        <h3
+          lang={item.originalHeadline ? LANG_CODE[item.language] : undefined}
+          className={`mt-4 text-[1.45rem] font-bold text-plum-deep sm:text-[1.9rem] ${item.originalHeadline ? 'leading-[1.35]' : 'leading-[1.2] tracking-[-0.02em]'}`}
+        >
+          {item.originalHeadline ?? item.headline}
+        </h3>
         <p className="mt-4 max-w-xl leading-relaxed text-ink-soft">{item.summary}</p>
         <ReadLink item={item} />
       </div>

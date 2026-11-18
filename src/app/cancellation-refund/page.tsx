@@ -4,7 +4,7 @@ import { pageMetadata } from '@/lib/site';
 
 export const metadata = pageMetadata({
   title: 'Cancellation & Refund Policy',
-  description: 'When the ₹200 online advance for a consultation at Life Fertility Centre is refunded, and how to reschedule.',
+  description: 'The ₹200 online advance for a consultation at Life Fertility Centre is non-refundable. How to reschedule, and when a payment is returned.',
   path: '/cancellation-refund',
 });
 
@@ -13,8 +13,8 @@ export default function CancellationPage() {
     <PolicyLayout
       title="Cancellation & refund policy"
       path="/cancellation-refund"
-      updated="14 November 2026"
-      intro={`This policy covers the ₹${CLINIC.advanceRupees} advance paid online to hold a consultation time.`}
+      updated="18 November 2026"
+      intro={`This policy covers the ₹${CLINIC.advanceRupees} advance paid online to hold a consultation time. The advance is non-refundable.`}
     >
       <h2>Rescheduling</h2>
       <p>
@@ -25,11 +25,8 @@ export default function CancellationPage() {
       <h2>Cancelling</h2>
       <ul>
         <li>
-          <strong>Cancelled at least 24 hours before</strong> the appointment: full refund of the advance.
-        </li>
-        <li>
-          <strong>Cancelled less than 24 hours before</strong>, or not attended: the advance is not refunded, but you may ask to reschedule once
-          within 14 days.
+          <strong>Cancelled by you</strong>, at any time, or not attended: the advance is not refunded. You may ask to reschedule once within 14
+          days instead.
         </li>
         <li>
           <strong>Cancelled or moved by the centre</strong> (for example because the doctor is called to an emergency): full refund, or a new time

@@ -39,8 +39,8 @@ Pages: `/`, `/about`, `/treatments`, `/treatments/[slug]`, `/fertility`, `/pregn
 `/privacy-policy`, `/terms`, `/cancellation-refund`, plus sitemap, robots, OG/Twitter images.
 
 Booking: consultations only, 5 visit reasons (gynae, fertility, pregnancy, follow-up, second
-opinion). Mon–Sat 10:00–14:00, 5-minute slots, 1 per slot, next 7 days (today included), ₹200 advance of
-the ₹650 fee. References look like `LFC-261114-641WE`. Emergency booking is off; `/urgent`
+opinion). Mon–Sat 10:00–14:00, 5-minute slots, 1 per slot, today plus the next 2 days, picked on a month calendar, ₹200 advance of
+the ₹600 fee (₹200 online + ₹400 at the centre). References look like `LFC-261114-641WE`. Emergency booking is off; `/urgent`
 tells patients to call or go to hospital.
 
 ## Placeholders to replace before launch

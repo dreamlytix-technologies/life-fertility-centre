@@ -587,6 +587,12 @@
   .print-only {
     display: block !important;
   }
+  /* Appointment acknowledgement slip: keep its tints and keep it on one page. */
+  .ack {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    break-inside: avoid;
+  }
   a {
     color: inherit !important;
     text-decoration: none !important;

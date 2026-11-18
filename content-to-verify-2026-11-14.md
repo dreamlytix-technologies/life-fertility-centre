@@ -45,8 +45,8 @@ Gynaecological Endoscopy (Germany)". Confirm: MD vs DGO (or both); whether MRCP-
 
 - Hours **Mon–Sat 10:00 AM – 2:00 PM**, Sunday closed. JustDial hints at a possible
   **evening session**: confirm; if real, add a second session in the seed.
-- Online slots: 5 minutes, 1 patient per slot (configurable to 2), dates shown for the next 7 days (today included).
-- Consultation fee **₹650**; online advance **₹200**, balance at the centre (both configurable
+- Online slots: 5 minutes, 1 patient per slot (configurable to 2), bookable today plus the next 2 days (calendar shows the month; other dates greyed out).
+- Consultation fee **₹600**; online advance **₹200**, balance **₹400** at the centre (both configurable
   in `base-seed.ts`).
 - Holiday/closure dates were copied from the template app's exception list. Replace with
   this centre's real closures.

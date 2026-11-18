@@ -6,10 +6,11 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import type { DayAvailability, SlotAvailability } from '@/core/booking/slots';
 import { formatDateLong } from '@/core/booking/time';
-import { formatMoney, VISIT_REASON_LABELS, VISIT_REASONS, type VisitReason } from '@/core/domain';
+import { formatMoney, GENDER_LABELS, GENDERS, VISIT_REASON_LABELS, VISIT_REASONS, type VisitReason } from '@/core/domain';
 import { AGE_LIMITS, patientSchema } from '@/core/validation';
 import { Icon } from '@/components/ui/Icon';
 import { ApiError, getAvailability, getDates, type BookableDate } from './client';
+import { CalendarPicker } from './CalendarPicker';
 import { PaymentSheet } from './PaymentSheet';
 import { useBooking } from './useBooking';
 
@@ -51,7 +52,7 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
   const [dates, setDates] = useState(initialDates);
   const [date, setDate] = useState<string | null>(() => initialDates.find((d) => d.open)?.date ?? null);
   const [day, setDay] = useState<DayAvailability | null>(null);
-  const [loadingDay, setLoadingDay] = useState(false);
+  const [loadingDay, setLoadingDay] = useState(() => initialDates.some((d) => d.open)); // first paint shows the skeleton while times load
   const [dayError, setDayError] = useState<string | null>(null);
   const [slot, setSlot] = useState<SlotAvailability | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -114,6 +115,7 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
       patient: {
         patientName: v.patientName,
         age: v.age,
+        gender: v.gender,
         contactNumber: v.contactNumber,
         email: v.email || undefined,
         partnerName: reason === 'FERTILITY' ? v.partnerName || undefined : undefined,
@@ -147,7 +149,8 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
   });
 
   const groups = useMemo(() => {
-    const slots = day?.slots ?? [];
+    // Times already gone today are hidden; booked ones stay visible but crossed out.
+    const slots = (day?.slots ?? []).filter((s) => s.status !== 'PAST');
     return [
       { label: 'Morning', slots: slots.filter((s) => s.start < '12:00') },
       { label: 'Midday', slots: slots.filter((s) => s.start >= '12:00') },
@@ -172,6 +175,46 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
     { n: 2, label: 'Date & time', value: date && slot ? `${formatDateLong(date)}, ${slot.label}` : undefined },
     { n: 3, label: 'Your details & payment' },
   ];
+
+  const summaryCard = (
+    <div className="panel overflow-hidden">
+      <div className="on-dark bg-plum-deep px-5 py-4 text-cream">
+        <p className="kicker">Your booking</p>
+        <p className="mt-1 font-display text-xl font-semibold">Consultation with Dr. Roy</p>
+      </div>
+      <dl className="grid gap-3 p-5 text-[0.92rem]">
+        <div>
+          <dt className="text-muted">Visit</dt>
+          <dd className="font-semibold">{reason ? VISIT_REASON_LABELS[reason] : 'Not chosen yet'}</dd>
+        </div>
+        {service && (
+          <div>
+            <dt className="text-muted">About</dt>
+            <dd className="font-semibold">{service.title}</dd>
+          </div>
+        )}
+        <div>
+          <dt className="text-muted">When</dt>
+          <dd className="font-semibold">{date && slot ? `${formatDateLong(date)}, ${slot.label}` : 'Not chosen yet'}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3 border-t border-line pt-3">
+          <dt className="text-muted">Consultation fee</dt>
+          <dd className="font-semibold">{formatMoney(feePaise)}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="text-muted">Pay online now</dt>
+          <dd className="numeral text-[1.5rem] leading-none text-plum-deep">{formatMoney(advancePaise)}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="text-muted">Pay at the centre</dt>
+          <dd className="font-semibold">{formatMoney(Math.max(0, feePaise - advancePaise))}</dd>
+        </div>
+      </dl>
+      <p className="border-t border-line px-5 py-4 text-[0.82rem] text-muted">
+        Check your details before you confirm. The advance is non-refundable.
+      </p>
+    </div>
+  );
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_20rem] lg:gap-12">
@@ -256,34 +299,28 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
             <h2 id="s2" ref={headingRef} tabIndex={-1} className="t-2 outline-none">
               Choose a <span className="accent">date and time</span>
             </h2>
-            <p className="mt-2 text-[0.92rem] text-muted">Mon–Sat, 10:00 AM – 2:00 PM · {slotMinutes}-minute appointments · next {daysShown} days</p>
+            <p className="mt-2 text-[0.92rem] text-muted">Mon–Sat, 10:00 AM – 2:00 PM · {slotMinutes}-minute appointments · today and the next {daysShown - 1} days</p>
 
-            <div role="radiogroup" aria-label="Date" className="no-scrollbar -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-2">
-              {dates.map((d) => {
-                const [wd, ...rest] = d.label.split(' ');
-                return (
-                  <button
-                    key={d.date}
-                    type="button"
-                    role="radio"
-                    aria-checked={date === d.date}
-                    disabled={!d.open}
-                    title={d.open ? undefined : d.message}
-                    onClick={() => {
-                      setDate(d.date);
-                      setSlot(null);
-                    }}
-                    className="flex w-[4.6rem] flex-none flex-col items-center rounded-lg border border-line bg-paper px-2 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-blush-light disabled:text-muted aria-checked:border-plum aria-checked:bg-plum aria-checked:text-cream"
-                  >
-                    <span className="text-[0.72rem] font-bold tracking-wider uppercase">{wd?.replace(',', '')}</span>
-                    <span className="mt-0.5 text-[0.88rem] font-semibold">{rest.join(' ')}</span>
-                    {!d.open && <span className="mt-0.5 text-[0.68rem]">Closed</span>}
-                  </button>
-                );
-              })}
-            </div>
+            <div className="mt-6 grid items-start gap-5 xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
+              <CalendarPicker
+                dates={dates}
+                value={date}
+                onChange={(d) => {
+                  setDate(d);
+                  setSlot(null);
+                }}
+              />
 
-            <div className="mt-6 min-h-40">
+              <div className="min-h-40 rounded-[var(--radius-card)] bg-paper p-3.5 shadow-[var(--shadow-card)] ring-1 ring-line sm:p-4">
+              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line pb-2.5">
+                <p className="text-[1.05rem] font-bold tracking-[-0.01em] text-plum-deep">{date ? formatDateLong(date) : 'Pick a date'}</p>
+                {!loadingDay && day?.open && (
+                  <p className="text-[0.8rem] font-semibold text-gold-ink tabular-nums">
+                    {day.summary.available} {day.summary.available === 1 ? 'time' : 'times'} free
+                  </p>
+                )}
+              </div>
+              {!date && <p className="text-ink-soft">Choose a highlighted date on the calendar to see the free times.</p>}
               {loadingDay && (
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4" role="status" aria-label="Loading times">
                   {Array.from({ length: 8 }, (_, i) => (
@@ -292,26 +329,26 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
                 </div>
               )}
               {!loadingDay && dayError && (
-                <div className="panel p-5">
+                <div>
                   <p className="error mt-0">{dayError}</p>
                   <button type="button" className="btn btn-quiet btn-sm mt-3" onClick={() => date && loadDay(date)}>
                     Try again
                   </button>
                 </div>
               )}
-              {!loadingDay && day && !day.open && <p className="panel p-5 text-ink-soft">{day.message ?? 'The centre is closed on this day.'}</p>}
+              {!loadingDay && day && !day.open && <p className="text-ink-soft">{day.message ?? 'The centre is closed on this day.'}</p>}
               {!loadingDay && day?.open && day.summary.available === 0 && (
-                <div className="panel p-5">
+                <div>
                   <p className="font-semibold">No times left on this day.</p>
                   <p className="mt-1 text-[0.92rem] text-ink-soft">Please choose another date, or call the centre.</p>
                 </div>
               )}
               {!loadingDay && day?.open && day.summary.available > 0 && (
-                <div className="grid gap-6">
+                <div className="grid gap-4 xl:max-h-[27rem] xl:overflow-y-auto xl:pr-1">
                   {groups.map((g) => (
                     <fieldset key={g.label}>
                       <legend className="text-[0.78rem] font-bold tracking-[0.14em] text-muted uppercase">{g.label}</legend>
-                      <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-6">
+                      <div className="mt-2 grid grid-cols-3 gap-1.5 sm:grid-cols-5 md:grid-cols-6 xl:grid-cols-5">
                         {g.slots.map((s) => {
                           const free = s.status === 'AVAILABLE' || s.status === 'LIMITED';
                           return (
@@ -321,7 +358,7 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
                               disabled={!free}
                               aria-pressed={slot?.start === s.start}
                               onClick={() => setSlot(s)}
-                              className="min-h-11 rounded-lg border border-line bg-paper text-[0.88rem] font-semibold tabular-nums disabled:cursor-not-allowed disabled:bg-blush-light disabled:text-muted disabled:line-through aria-pressed:border-plum aria-pressed:bg-plum aria-pressed:text-cream"
+                              className="min-h-9 rounded-md border border-line bg-paper px-1 text-[0.8rem] font-semibold tabular-nums disabled:cursor-not-allowed disabled:bg-blush-light disabled:text-muted disabled:line-through aria-pressed:border-plum aria-pressed:bg-plum aria-pressed:text-cream"
                             >
                               {s.label}
                               {!free && <span className="sr-only"> (not available)</span>}
@@ -333,6 +370,7 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
                   ))}
                 </div>
               )}
+              </div>
             </div>
             <div className="mt-8 flex flex-wrap gap-3">
               <button type="button" className="btn btn-plum" disabled={!slot} onClick={() => go(3)}>
@@ -352,8 +390,8 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
             </h2>
             <p className="mt-2 text-[0.92rem] text-muted">Only what the centre needs to see you. No medical history is asked for online.</p>
             <form onSubmit={onSubmit} noValidate className="mt-6 grid gap-5">
-              <div className="grid gap-5 sm:grid-cols-[1fr_8rem]">
-                <div>
+              <div className="grid grid-cols-2 gap-5 sm:grid-cols-[1fr_7rem_9rem]">
+                <div className="col-span-2 sm:col-span-1">
                   <label htmlFor="patientName" className="label">
                     Patient’s full name
                   </label>
@@ -375,6 +413,22 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
                     {...fieldProps('age')}
                   />
                   <ErrorText k="age" />
+                </div>
+                <div>
+                  <label htmlFor="gender" className="label">
+                    Gender
+                  </label>
+                  <select id="gender" className="field" defaultValue="" {...register('gender')} {...fieldProps('gender')}>
+                    <option value="" disabled>
+                      Select
+                    </option>
+                    {GENDERS.map((g) => (
+                      <option key={g} value={g}>
+                        {GENDER_LABELS[g]}
+                      </option>
+                    ))}
+                  </select>
+                  <ErrorText k="gender" />
                 </div>
               </div>
               <div className="grid gap-5 sm:grid-cols-2">
@@ -459,45 +513,7 @@ export function BookingFlow({ initialDates, feePaise, advancePaise, holdMinutes,
         )}
       </div>
 
-      <aside className="lg:sticky lg:top-32 lg:self-start">
-        <div className="panel overflow-hidden">
-          <div className="on-dark bg-plum-deep px-5 py-4 text-cream">
-            <p className="kicker">Your booking</p>
-            <p className="mt-1 font-display text-xl font-semibold">Consultation with Dr. Roy</p>
-          </div>
-          <dl className="grid gap-3 p-5 text-[0.92rem]">
-            <div>
-              <dt className="text-muted">Visit</dt>
-              <dd className="font-semibold">{reason ? VISIT_REASON_LABELS[reason] : 'Not chosen yet'}</dd>
-            </div>
-            {service && (
-              <div>
-                <dt className="text-muted">About</dt>
-                <dd className="font-semibold">{service.title}</dd>
-              </div>
-            )}
-            <div>
-              <dt className="text-muted">When</dt>
-              <dd className="font-semibold">{date && slot ? `${formatDateLong(date)}, ${slot.label}` : 'Not chosen yet'}</dd>
-            </div>
-            <div className="border-t border-line pt-3">
-              <dt className="text-muted">Consultation fee</dt>
-              <dd className="font-semibold">{formatMoney(feePaise)}</dd>
-            </div>
-            <div>
-              <dt className="text-muted">Pay online now</dt>
-              <dd className="numeral text-[1.9rem] leading-none text-plum-deep">{formatMoney(advancePaise)}</dd>
-            </div>
-            <div>
-              <dt className="text-muted">Pay at the centre</dt>
-              <dd className="font-semibold">{formatMoney(Math.max(0, feePaise - advancePaise))}</dd>
-            </div>
-          </dl>
-          <p className="border-t border-line px-5 py-4 text-[0.82rem] text-muted">
-            Your time is held for {holdMinutes} minutes while you pay. Tests and procedures are charged separately.
-          </p>
-        </div>
-      </aside>
+      <aside className="lg:sticky lg:top-32 lg:self-start">{summaryCard}</aside>
       <PaymentSheet engine={engine} onExpire={onExpire} />
     </div>
   );

@@ -16,6 +16,8 @@ export interface PressItem {
   language: 'Bengali' | 'English' | 'Hindi';
   /** Our English headline (a translation/paraphrase, not a quote). */
   headline: string;
+  /** The outlet's own headline, word for word, in the article's language. Shown in place of `headline` when set. */
+  originalHeadline?: string;
   summary: string;
   url: string;
   /** Optional step-by-step account shown on the featured story. */
@@ -29,6 +31,8 @@ export const PRESS: PressItem[] = [
     date: '2025-11',
     language: 'Bengali',
     headline: 'Malda doctor delivers a baby girl inside a toto stuck in traffic',
+    // Headline as published on uttarbangasambad.com (checked 19 Nov 2026).
+    originalHeadline: 'টোটোয় প্রসব, নাড়ি কাটলেন ডাক্তার',
     summary:
       'A young woman went into labour in a toto caught in a crowded road near Mokdumpur bazar. Dr. Roy left his patients, went out with his staff and delivered the baby in the vehicle, then sent mother and newborn on for hospital care. Both were reported to be doing well.',
     url: 'https://uttarbangasambad.com/malda-delivery-in-toto/',

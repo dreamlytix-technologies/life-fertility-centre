@@ -11,7 +11,7 @@ import type {
   SlotPool,
   Testimonial,
 } from '../domain';
-import { OCCUPYING_STATUSES } from '../domain';
+import { OCCUPYING_STATUSES, type Gender } from '../domain';
 import type { OccupancyMap } from '../booking/slots';
 import { canTransition } from '../booking/status';
 import type {
@@ -52,6 +52,7 @@ function toRecord(a: AppointmentRow): AppointmentRecord {
       contactNumber: a.patient.phone,
       patientName: a.patient.name,
       age: a.patient.ageYears,
+      gender: (a.patient.gender as Gender | null) ?? undefined,
       email: a.patient.email ?? undefined,
       partnerName: a.patient.partnerName ?? undefined,
     },
@@ -327,6 +328,7 @@ export class PrismaStore implements ClinicStore {
               phone: a.patient.contactNumber,
               email: a.patient.email || null,
               ageYears: a.patient.age,
+              gender: a.patient.gender ?? null,
               partnerName: a.patient.partnerName || null,
             },
           });

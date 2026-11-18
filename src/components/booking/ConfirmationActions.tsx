@@ -9,7 +9,7 @@ export function CopyButton({ text, label = 'Copy' }: { text: string; label?: str
   return (
     <button
       type="button"
-      className="no-print inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-paper px-3.5 text-sm font-semibold hover:border-ink-soft"
+      className="no-print inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-paper px-3 text-[0.82rem] font-semibold hover:border-ink-soft"
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(text);
@@ -29,7 +29,7 @@ export function CopyButton({ text, label = 'Copy' }: { text: string; label?: str
 export function PrintButton() {
   return (
     <button type="button" className="btn btn-plum" onClick={() => window.print()}>
-      <Icon name="download" size={19} /> Download confirmation
+      <Icon name="download" size={19} /> Download Confirmation
     </button>
   );
 }

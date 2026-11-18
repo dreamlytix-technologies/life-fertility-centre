@@ -16,9 +16,16 @@ test('site settings: 5-minute online slots, Mon–Sat 10:00–14:00 (48 a day)',
   assert.equal(day.slots.at(-1)?.start, '13:55');
 });
 
-test('site settings: the booking date strip shows 7 dates, today included', () => {
+test('site settings: online booking is open for today and the next 2 days', () => {
   const dates = bookableDates(seed.settings, 'CONSULTATION', MONDAY_9AM);
-  assert.equal(dates.length, 7);
+  assert.equal(dates.length, 3);
   assert.equal(dates[0]?.date, '2026-11-16');
-  assert.equal(dates.at(-1)?.date, '2026-11-22');
+  assert.equal(dates.at(-1)?.date, '2026-11-18');
+});
+
+test('site settings: ₹600 consultation = ₹200 online advance + ₹400 at the centre', () => {
+  const { consultationFee, advancePayment } = seed.settings.rules;
+  assert.equal(consultationFee, 60000); // paise
+  assert.equal(advancePayment, 20000);
+  assert.equal(consultationFee - advancePayment, 40000);
 });

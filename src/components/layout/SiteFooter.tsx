@@ -12,7 +12,6 @@ const QUICK_LINKS: [string, string][] = [
   ['/pregnancy', 'Pregnancy care'],
   ['/urgent', 'Urgent help'],
   ['/faq', 'FAQ'],
-  ['/contact', 'Contact us'],
 ];
 
 const SOCIAL: { href: string; icon: IconName; label: string }[] = [
@@ -32,7 +31,7 @@ function Chevrons() {
 
 function ColumnTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-[1.15rem] font-bold tracking-[-0.01em] text-cream">
+    <h2 className="text-[1.05rem] font-bold tracking-[-0.01em] text-cream">
       {children}
       <span aria-hidden="true" className="mt-3 block h-[3px] w-12 rounded-full bg-gradient-to-r from-gold-pale to-gold" />
     </h2>
@@ -41,11 +40,11 @@ function ColumnTitle({ children }: { children: React.ReactNode }) {
 
 function ContactItem({ icon, children }: { icon: IconName; children: React.ReactNode }) {
   return (
-    <li className="flex gap-3.5">
-      <span className="grid size-10 shrink-0 place-items-center rounded-full text-gold-pale ring-1 ring-gold/50">
-        <Icon name={icon} size={17} />
+    <li className="flex items-center gap-3">
+      <span className="grid size-8 shrink-0 place-items-center rounded-full text-gold-pale ring-1 ring-gold/50">
+        <Icon name={icon} size={15} />
       </span>
-      <span className="min-w-0 self-center leading-relaxed">{children}</span>
+      <span className="min-w-0 leading-snug">{children}</span>
     </li>
   );
 }
@@ -73,17 +72,17 @@ export function SiteFooter({ settings }: { settings: ClinicSettings; demo?: bool
           <Link href="/" className="inline-flex items-center gap-3" aria-label="Life Fertility Centre — home">
             <LogoMark size={46} tone="dark" />
             <span className="flex flex-col leading-none">
-              <span className="text-xl font-bold tracking-[-0.015em] text-cream">Life Fertility Centre</span>
+              <span className="text-lg font-bold tracking-[-0.015em] text-cream">Life Fertility Centre</span>
               <span className="mt-1.5 text-[0.62rem] font-bold tracking-[0.24em] text-gold-pale/85 uppercase">
                 {DOCTOR.honorific} {DOCTOR.name}
               </span>
             </span>
           </Link>
-          <p className="mt-6 text-[0.95rem] leading-relaxed">
+          <p className="mt-6 text-[0.86rem] leading-relaxed">
             Fertility, gynaecology and pregnancy care with {DOCTOR.experienceLabel} of experience — unhurried, private and close to
             home.
           </p>
-          <p className="mt-4 text-[0.95rem] leading-relaxed">
+          <p className="mt-4 text-[0.86rem] leading-relaxed">
             We aim to give every woman and couple clear answers, a plan they understand and support at each step.
           </p>
           <ul className="mt-6 flex gap-2.5" aria-label="Find us online">
@@ -105,7 +104,7 @@ export function SiteFooter({ settings }: { settings: ClinicSettings; demo?: bool
 
         <nav aria-label="Quick links">
           <ColumnTitle>Quick Links</ColumnTitle>
-          <ul className="mt-6 grid gap-3 text-[0.97rem]">
+          <ul className="mt-6 grid gap-3 text-[0.88rem]">
             {QUICK_LINKS.map(([href, label]) => (
               <li key={href} className="flex gap-2.5">
                 <Chevrons />
@@ -119,7 +118,7 @@ export function SiteFooter({ settings }: { settings: ClinicSettings; demo?: bool
 
         <div>
           <ColumnTitle>Open Schedule</ColumnTitle>
-          <ul className="mt-6 grid gap-3 text-[0.97rem]">
+          <ul className="mt-6 grid gap-3 text-[0.88rem]">
             {days.map((d) => (
               <li key={d.dayOfWeek} className="flex gap-2.5">
                 <Chevrons />
@@ -135,10 +134,10 @@ export function SiteFooter({ settings }: { settings: ClinicSettings; demo?: bool
 
         <div>
           <ColumnTitle>Contact Details</ColumnTitle>
-          <ul className="mt-6 grid gap-4 text-[0.95rem]">
+          <ul className="mt-6 grid gap-2.5 text-[0.86rem]">
             <ContactItem icon="pin">
               <a href={LINKS.googleMaps} target="_blank" rel="noopener noreferrer" className={linkCls}>
-                {CLINIC.name}, {CLINIC.street}, {CLINIC.line2}, {CLINIC.city}
+                {CLINIC.street}, {CLINIC.line2}, {CLINIC.city}
                 <span className="sr-only"> (directions, opens in a new tab)</span>
               </a>
             </ContactItem>
@@ -161,7 +160,7 @@ export function SiteFooter({ settings }: { settings: ClinicSettings; demo?: bool
           </ul>
           <Link
             href="/appointment"
-            className="group mt-7 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-gold-pale to-gold px-5 py-3 text-[0.95rem] font-bold text-plum-deep transition hover:brightness-105"
+            className="group mt-7 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-gold-pale to-gold px-5 py-3 text-[0.88rem] font-bold text-plum-deep transition hover:brightness-105"
           >
             <Icon name="calendar" size={17} />
             Book a consultation
@@ -171,19 +170,20 @@ export function SiteFooter({ settings }: { settings: ClinicSettings; demo?: bool
       </div>
 
       {/* Statutory notices */}
+      {/* Same width as the footer columns; the box hugs its content. Notice + both registration badges fit on one line on desktops and wrap on smaller screens. */}
       <div className="shell pb-12">
-        <div className="relative grid gap-4 overflow-hidden rounded-2xl bg-black/20 p-5 ring-1 ring-cream/10 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-8 lg:p-6">
+        <div className="relative mx-auto flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-2.5 overflow-hidden rounded-2xl bg-black/20 py-3 pr-3 pl-5 ring-1 ring-cream/10">
           <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-gold-pale to-gold" />
-          <p className="flex gap-3 pl-2 text-[0.88rem] leading-relaxed text-cream">
-            <Icon name="shield" size={20} className="mt-0.5 shrink-0 text-gold-pale" />
+          <p className="flex min-w-0 items-start gap-2 text-[0.72rem] leading-relaxed text-cream sm:items-center">
+            <Icon name="shield" size={16} className="mt-0.5 shrink-0 text-gold-pale sm:mt-0" />
             <span>
               <strong className="font-semibold text-gold-pale">PCPNDT notice: </strong>
               {LEGAL.pcpndt}
             </span>
           </p>
-          <ul className="flex flex-wrap gap-2 pl-2 text-xs lg:pl-0">
+          <ul className="flex flex-wrap gap-1.5 text-[0.66rem]">
             {[LEGAL.artRegistration, LEGAL.medicalRegistration].map((r) => (
-              <li key={r} className="rounded-full px-3 py-1.5 text-cream/80 ring-1 ring-cream/20">
+              <li key={r} className="rounded-full px-2 py-0.5 whitespace-nowrap text-cream/80 ring-1 ring-cream/20">
                 {r}
               </li>
             ))}
@@ -198,7 +198,7 @@ export function SiteFooter({ settings }: { settings: ClinicSettings; demo?: bool
 
       {/* Bottom bar: copyright left, policies right */}
       <div className="relative border-t border-cream/10 bg-plum-deep/80 backdrop-blur-sm">
-        <div className="shell flex flex-col gap-3 py-5 text-[0.84rem] text-cream/70 md:flex-row md:items-center md:justify-between md:gap-8">
+        <div className="shell flex flex-col gap-3 py-5 text-[0.78rem] text-cream/70 md:flex-row md:items-center md:justify-between md:gap-8">
           <p>
             © Copyright {year}. All Rights Reserved. Developed by{' '}
             <a

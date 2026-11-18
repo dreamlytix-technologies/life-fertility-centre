@@ -25,7 +25,7 @@ export default function PrivacyPage() {
       <h2>What we collect when you book</h2>
       <ul>
         <li>
-          <strong>Patient’s name</strong> and <strong>age in years</strong> (online booking is for ages 16–70)
+          <strong>Patient’s name</strong>, <strong>age in years</strong> (online booking is for ages 16–70) and <strong>gender</strong>
         </li>
         <li>
           <strong>Mobile number</strong>, to confirm and, if needed, change your appointment

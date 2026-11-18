@@ -7,7 +7,7 @@ type Tile = { slug: string; span: string; tone: 'deep' | 'blush' | 'paper' | 'go
 
 /** Asymmetric bento: one tall feature tile, a wide tile and smaller ones. */
 const TILES: Tile[] = [
-  { slug: 'ivf-icsi', span: 'md:col-span-2 md:row-span-2', tone: 'deep' },
+  { slug: 'ivf-icsi', span: 'md:col-span-2 lg:row-span-2', tone: 'deep' },
   { slug: 'infertility-evaluation', span: 'md:col-span-2', tone: 'blush' },
   { slug: 'pcos-pcod', span: '', tone: 'paper' },
   { slug: 'laparoscopy-hysteroscopy', span: '', tone: 'gold' },
@@ -42,7 +42,7 @@ function TileCard({ t, tile, index }: { t: Treatment; tile: Tile; index: number 
       </div>
       <div className="relative mt-8">
         <p className={`text-[0.72rem] font-bold tracking-[0.18em] uppercase ${dark ? 'text-rose' : 'text-muted'}`}>{t.category}</p>
-        <h3 className={`mt-1 font-display font-semibold ${dark ? 'text-[1.85rem] leading-[1.1]' : 'text-[1.25rem] leading-tight'}`}>{t.title}</h3>
+        <h3 className={`mt-1 font-display font-semibold [overflow-wrap:anywhere] hyphens-auto ${dark ? 'text-[1.85rem] leading-[1.1]' : 'text-[1.25rem] leading-tight'}`}>{t.title}</h3>
         {(dark || tile.span.includes('col-span-2')) && (
           <p className={`mt-3 max-w-md text-[0.95rem] ${dark ? 'text-cream/80' : 'text-ink-soft'}`}>{t.summary}</p>
         )}
@@ -72,7 +72,7 @@ export function TreatmentBento() {
             All 13 treatments
           </Link>
         </div>
-        <div className="mt-12 grid auto-rows-[minmax(12rem,auto)] gap-4 md:grid-cols-4">
+        <div className="mt-12 grid auto-rows-[minmax(12rem,auto)] gap-4 md:grid-cols-2 lg:grid-cols-4">
           {TILES.map((tile, i) => {
             const t = treatmentBySlug(tile.slug);
             return t ? <TileCard key={t.slug} t={t} tile={tile} index={i} /> : null;

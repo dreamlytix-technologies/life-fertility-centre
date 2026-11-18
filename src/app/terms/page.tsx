@@ -33,6 +33,7 @@ export default function TermsPage() {
         <li>Online booking is for patients aged 16 to 70. For anyone else, please call the centre.</li>
         <li>Your time is held for a short period while you pay the advance. If payment is not completed in time, the time is released.</li>
         <li>The consultation fee is ₹{CLINIC.consultationFeeRupees}. The advance of ₹{CLINIC.advanceRupees} is adjusted against it; the balance is paid at the centre. Tests, scans and procedures are charged separately.</li>
+        <li>The advance is non-refundable if you cancel or miss the appointment. See the cancellation and refund policy for the exceptions.</li>
         <li>Please give accurate details. The centre may contact you to confirm or, rarely, to reschedule.</li>
         <li>Consultation times are approximate; occasionally a delivery or urgent case may cause a delay.</li>
       </ul>

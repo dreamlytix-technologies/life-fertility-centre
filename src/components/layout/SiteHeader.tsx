@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CLINIC, whatsappLink } from '@/content/facts';
 import { Icon, LogoMark } from '@/components/ui/Icon';
 import { useDialog } from '@/lib/useDialog';
@@ -77,7 +78,10 @@ export function SiteHeader() {
         </button>
       </div>
 
-      {open && (
+      {open &&
+        // Rendered at the end of <body>: the header is sticky with a backdrop blur, which would
+        // otherwise become the containing block and push the fixed sheet down by the notice bar.
+        createPortal(
         <div className="fixed inset-0 z-[60] lg:hidden">
           <div className="absolute inset-0 bg-ink/40" aria-hidden="true" onClick={() => setOpen(false)} />
           <div
@@ -135,8 +139,9 @@ export function SiteHeader() {
               <p className="mt-2 text-center text-sm text-cream/80">{CLINIC.hoursLabel}</p>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )}
     </header>
   );
 }

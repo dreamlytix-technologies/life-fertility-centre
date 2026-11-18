@@ -65,8 +65,8 @@ export const seed = createSeed({
     advancePayment: rupees(CLINIC.advanceRupees),
     slotDurationMinutes: 5,
     maxPerSlot: 1,
-    // Today + 6 days = 7 dates shown in the booking date strip.
-    bookingWindowDays: 6,
+    // Today + the next 2 days can be booked; the calendar greys out every other date.
+    bookingWindowDays: 2,
     referencePrefix: 'LFC',
   },
   // No online emergency booking at this centre: urgent problems → /urgent.
